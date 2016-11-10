@@ -1,6 +1,3 @@
-import java.math.BigInteger;
-import java.util.ArrayList;
-
 public class RSA {
     public static void main(String[] args) {
         for (int i = 0; i < 100; i ++) {
