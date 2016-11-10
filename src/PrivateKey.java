@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.math.BigInteger;
 
-public class PrivateKey {
+public class PrivateKey implements Serializable {
     private BigInteger modulus;
     private BigInteger publicExponent;
     private BigInteger privateExponent;
