@@ -4,14 +4,14 @@ public class RSA {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         KeyPair k = new KeyPair(256, 0.999);
 
-        PrivateKey sk1 = k.getSk();
-        System.out.println(sk1.getPrime1());
-        System.out.println(sk1.getPrime2());
-        serialize(sk1, "./private_key.dat");
+        PrivateKey privateKey1 = k.getPrivateKey();
+        System.out.println(privateKey1.getPrime1());
+        System.out.println(privateKey1.getPrime2());
+        serialize(privateKey1, "./private_key.dat");
 
-        PrivateKey sk2 = (PrivateKey) deserialize("./private_key.dat");
-        System.out.println(sk2.getPrime1());
-        System.out.println(sk2.getPrime2());
+        PrivateKey privateKey2 = (PrivateKey) deserialize("./private_key.dat");
+        System.out.println(privateKey2.getPrime1());
+        System.out.println(privateKey2.getPrime2());
     }
 
     public static void serialize(Object obj, String filePath) throws IOException {

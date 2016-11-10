@@ -1,19 +1,18 @@
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class KeyPair {
 
-    private PrivateKey sk;
-    private PublicKey pk;
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
 
-    public PrivateKey getSk() {
-        return sk;
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 
-    public PublicKey getPk() {
-        return pk;
+    public PublicKey getPublicKey() {
+        return publicKey;
     }
 
     public KeyPair(int bits, double millerRabinCertainty) {
@@ -37,8 +36,8 @@ public class KeyPair {
         BigInteger exponent2 = privateExponent.mod(prime2MinusOne);
         BigInteger coefficient = prime2.modInverse(prime1);
 
-        sk = new PrivateKey(modulus, publicExponent, privateExponent, prime1, prime2, exponent1, exponent2, coefficient);
-        pk = new PublicKey(modulus,publicExponent);
+        privateKey = new PrivateKey(modulus, publicExponent, privateExponent, prime1, prime2, exponent1, exponent2, coefficient);
+        publicKey = new PublicKey(modulus,publicExponent);
     }
 
     private static BigInteger randomProbablyPrime(int bits, double certainty) {
