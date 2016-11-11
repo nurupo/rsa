@@ -1,17 +1,74 @@
 import java.io.*;
+import java.util.*;
 
 public class RSA {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        KeyPair k = new KeyPair(256, 0.999);
+        List<String> argList= Arrays.asList(args);
 
-        PrivateKey privateKey1 = k.getPrivateKey();
-        System.out.println(privateKey1.getPrime1());
-        System.out.println(privateKey1.getPrime2());
-        serialize(privateKey1, "./private_key.dat");
+        String usage = "Usage:\n" +
+                       "  To generate a keypair of <bits> bits with a certanity <certanity> of keys\n" +
+                       "  using prime numbers and save it in <public_key_file> and <secret_key_file>\n" +
+                       "  files:\n" +
+                       "    java RSA -K -p public_key_file -s secret_key_file -b bits -y certainty\n" +
+                       "\n" +
+                       "  To encrypt a file <plaintext_file> using <public_key_file> public key and save\n" +
+                       "  the cipher text as <ciphertext_file> file:\n" +
+                       "    java RSA -e -m plaintext_file -p public_key_file -c ciphertext_file\n" +
+                       "\n" +
+                       "  To decrypt a file <ciphertext_file> using <private_key_file> private key and\n" +
+                       "  save the plaintext as <plaintext_file> file:\n" +
+                       "    java RSA -d -c ciphertext_file -s secret_key_file -m plaintext_file\n" +
+                       "\n" +
+                       "  To see this help message:\n" +
+                       "    java RSA -h\n";
 
-        PrivateKey privateKey2 = (PrivateKey) deserialize("./private_key.dat");
-        System.out.println(privateKey2.getPrime1());
-        System.out.println(privateKey2.getPrime2());
+        if (verifyArgs(argList, Arrays.asList("-K", "-p", "-s", "-b", "-y"))) {
+            KeyPair k = new KeyPair(Integer.parseInt(getFlagArg(argList, "-b")),
+                                    Double.parseDouble(getFlagArg(argList, "-y")));
+            serialize(k.getPublicKey(), getFlagArg(argList, "-p"));
+            serialize(k.getPrivateKey(), getFlagArg(argList, "-s"));
+            System.exit(0);
+        }
+
+        if (verifyArgs(argList, Arrays.asList("-e", "-m", "-p", "-c"))) {
+            // TODO: call encryption subroutine
+            System.exit(0);
+        }
+
+        if (verifyArgs(argList, Arrays.asList("-d", "-c", "-s", "-p"))) {
+            // TODO: call decryption subroutine
+            System.exit(0);
+        }
+
+        if (verifyArgs(argList, Arrays.asList("-h"))) {
+            System.out.print(usage);
+            System.exit(0);
+        }
+
+        System.err.print("Error: incorrect arguments passed.\n\n");
+        System.out.print(usage);
+        System.exit(1);
+    }
+
+    // checks if all flags present and if all of them, except the first one, take an argument
+    public static boolean verifyArgs(List<String> args, List<String> flags) {
+        if (!args.containsAll(flags) || args.size() != 1 + (flags.size()-1)*2) {
+            return false;
+        }
+
+        for (int i = 1; i < flags.size(); i ++) {
+            String f = flags.get(i);
+            int argIndex = args.indexOf(f) + 1;
+            if (argIndex >= args.size() || args.get(argIndex).startsWith("-")) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static String getFlagArg(List<String> args, String flag) {
+        return args.get(args.indexOf(flag)+1);
     }
 
     public static void serialize(Object obj, String filePath) throws IOException {
