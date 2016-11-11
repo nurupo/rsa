@@ -1,4 +1,6 @@
 import java.io.*;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.*;
 
 public class RSA {
@@ -89,5 +91,35 @@ public class RSA {
             obj = objectStream.readObject();
         }
         return obj;
+    }
+
+    public static BigInteger pad(PublicKey publicKey, BigInteger plaintext) {
+        int k = (int) Math.ceil(publicKey.getModulus().bitLength()/8.0);
+        int mLen = (int) Math.ceil(plaintext.bitLength()/8.0);
+
+        if (mLen > k - 11) {
+            throw new IllegalArgumentException("Error: Plaintext file is too long.");
+        }
+
+        byte[] result = new byte[k];
+
+        result[0] = 0x00;
+        result[1] = 0x02;
+
+        Random rng = new SecureRandom();
+        int psLen = k - mLen - 3;
+        for (int i = 0; i < psLen; i ++) {
+            byte[] b = new byte[1];
+            do {
+                rng.nextBytes(b);
+            } while (b[0] == 0);
+            result[2 + i] = b[0];
+        }
+
+        result[2 + psLen] = 0x00;
+
+        System.arraycopy(plaintext.toByteArray(), 0, result, 2 + psLen + 1, mLen);
+
+        return new BigInteger(result);
     }
 }
