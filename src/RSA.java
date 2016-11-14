@@ -33,7 +33,10 @@ public class RSA {
         }
 
         if (verifyArgs(argList, Arrays.asList("-e", "-m", "-p", "-c"))) {
-            // TODO: call encryption subroutine
+            PublicKey publicKey = (PublicKey)deserialize(getFlagArg(argList, "-p"));
+            BigInteger plaintext = readBigIntegerFromFile(getFlagArg(argList, "-m"), publicKey.getModulus().bitLength());
+            BigInteger ciphertext = encrypt(publicKey, plaintext);
+            writeBigIntegerToFile(getFlagArg(argList, "-c"), ciphertext);
             System.exit(0);
         }
 
@@ -93,9 +96,43 @@ public class RSA {
         return obj;
     }
 
+    public static int bitsToBytes(int bits) {
+        return (int)Math.ceil(bits/8.0);
+    }
+
+    public static BigInteger readBigIntegerFromFile(String filePath, int maxBits) throws IOException {
+        File file = new File(filePath);
+
+        int maxBytes = bitsToBytes(maxBits);
+
+        if (filePath.length() > maxBytes) {
+            throw new IllegalArgumentException("Error: file " + filePath + " is larger than " + maxBytes + " + bytes.");
+        }
+
+        byte[] bytes = new byte[(int)file.length()];
+
+        try (FileInputStream fileStream = new FileInputStream(file);) {
+            fileStream.read(bytes);
+        }
+
+        BigInteger result = new BigInteger(bytes);
+
+        if (result.bitLength() > maxBits) {
+            throw new IllegalArgumentException("Error: file " + filePath + " contains an integer larger than " + maxBits + " + bits.");
+        }
+
+        return result;
+    }
+
+    public static void writeBigIntegerToFile(String filePath, BigInteger data) throws IOException {
+        try (FileOutputStream fileStream = new FileOutputStream(filePath);) {
+            fileStream.write(data.toByteArray());
+        }
+    }
+
     public static BigInteger pad(PublicKey publicKey, BigInteger plaintext) {
-        int k = (int) Math.ceil(publicKey.getModulus().bitLength()/8.0);
-        int mLen = (int) Math.ceil(plaintext.bitLength()/8.0);
+        int k = bitsToBytes(publicKey.getModulus().bitLength());
+        int mLen = bitsToBytes(plaintext.bitLength());
 
         if (mLen > k - 11) {
             throw new IllegalArgumentException("Error: Plaintext file is too long.");
@@ -121,5 +158,16 @@ public class RSA {
         System.arraycopy(plaintext.toByteArray(), 0, result, 2 + psLen + 1, mLen);
 
         return new BigInteger(result);
+    }
+
+    public static BigInteger encrypt(PublicKey publicKey, BigInteger plaintext) {
+        BigInteger paddedPlaintext = pad(publicKey, plaintext);
+
+        // https://tools.ietf.org/html/rfc3447#section-5.1.1
+        if (paddedPlaintext.compareTo(publicKey.getModulus()) >= 0) {
+            throw new IllegalArgumentException("Error: plaintext integer representation is greater than modulus - 1");
+        }
+
+        return plaintext.modPow(publicKey.getPublicExponent(), publicKey.getModulus());
     }
 }
