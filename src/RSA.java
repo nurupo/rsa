@@ -160,6 +160,29 @@ public class RSA {
         return new BigInteger(result);
     }
 
+    public static BigInteger unpad(PrivateKey privateKey, BigInteger paddedPlaintext) {
+        byte[] paddedPlaintextByte = paddedPlaintext.toByteArray();
+
+        if (paddedPlaintextByte[0] != 0x02) {
+            throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
+        }
+
+        int i = 1;
+        while (paddedPlaintextByte[i] != 0x00) {
+            i ++;
+        }
+
+        if (i < 9) {
+            throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
+        }
+
+        byte[] result = new byte[paddedPlaintextByte.length - (i+1)];
+
+        System.arraycopy(paddedPlaintextByte, i+1, result, 0, result.length);
+
+        return new BigInteger(result);
+    }
+
     public static BigInteger encrypt(PublicKey publicKey, BigInteger plaintext) {
         BigInteger paddedPlaintext = pad(publicKey, plaintext);
 
