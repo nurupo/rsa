@@ -37,7 +37,9 @@ public class RSA {
         if (verifyArgs(argList, Arrays.asList("-e", "-m", "-p", "-c"))) {
             PublicKey publicKey = (PublicKey)deserialize(getFlagArg(argList, "-p"));
             byte[] plaintext = readByteFile(getFlagArg(argList, "-m"), bitsToBytes(publicKey.getModulus().bitLength()));
+            System.out.println("plaintext=" + byteArrayToHex(plaintext));
             byte[] ciphertext = encrypt(publicKey, plaintext);
+            System.out.println("ciphertext=" + byteArrayToHex(ciphertext));
             writeByteFile(getFlagArg(argList, "-c"), ciphertext);
             System.exit(0);
         }
@@ -45,7 +47,9 @@ public class RSA {
         if (verifyArgs(argList, Arrays.asList("-d", "-c", "-s", "-m"))) {
             PrivateKey privateKey = (PrivateKey)deserialize(getFlagArg(argList, "-s"));
             byte[] ciphertext = readByteFile(getFlagArg(argList, "-c"), bitsToBytes(privateKey.getModulus().bitLength()));
+            System.out.println("ciphertext=" + byteArrayToHex(ciphertext));
             byte[] plaintext = decrypt(privateKey, ciphertext);
+            System.out.println("plaintext=" + byteArrayToHex(plaintext));
             writeByteFile(getFlagArg(argList, "-m"), plaintext);
             System.exit(0);
         }
@@ -135,6 +139,14 @@ public class RSA {
         }
     }
 
+    public static String byteArrayToHex(byte[] bytes) {
+        Formatter formatter = new Formatter();
+        for (byte b : bytes) {
+            formatter.format("%02x", b);
+        }
+        return formatter.toString();
+    }
+
     public static byte[] pad(PublicKey publicKey, byte[] plaintext) {
         int k = bitsToBytes(publicKey.getModulus().bitLength());
         int mLen = plaintext.length;
@@ -189,6 +201,8 @@ public class RSA {
     public static byte[] encrypt(PublicKey publicKey, byte[] plaintext) {
         BigInteger paddedPlaintext = new BigInteger(pad(publicKey, plaintext));
 
+        System.out.println("padded plaintext=" + paddedPlaintext.toString(16));
+
         // https://tools.ietf.org/html/rfc3447#section-5.1.1
         if (paddedPlaintext.compareTo(publicKey.getModulus()) >= 0) {
             throw new IllegalArgumentException("Error: plaintext integer representation is greater than modulus - 1");
@@ -204,7 +218,13 @@ public class RSA {
         BigInteger m2 = ciphertextInt.modPow(privateKey.getExponent2(), privateKey.getPrime2());
         BigInteger h = m1.subtract(m2).multiply(privateKey.getCoefficient()).mod(privateKey.getPrime1());
 
-        BigInteger paddedPlaintext = m2.add(privateKey.getPrime2().multiply(h));
+        System.out.println("m1=" + m1.toString(16));
+        System.out.println("m2=" + m2.toString(16));
+        System.out.println("h=" + h.toString(16));
+
+        BigInteger paddedPlaintext = privateKey.getPrime2().multiply(h).add(m2);
+
+        System.out.println("padded plaintext (m)=" + paddedPlaintext.toString(16));
 
         return unpad(privateKey, paddedPlaintext.toByteArray());
     }
