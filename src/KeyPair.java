@@ -16,8 +16,8 @@ public class KeyPair {
     }
 
     public KeyPair(int bits, double millerRabinCertainty) {
-        BigInteger prime1 = randomProbablyPrime(bits, millerRabinCertainty);
-        BigInteger prime2 = randomProbablyPrime(bits, millerRabinCertainty);
+        BigInteger prime1 = randomProbablyPrime(bits/2, millerRabinCertainty);
+        BigInteger prime2 = randomProbablyPrime(bits/2 + bits%2, millerRabinCertainty);
         BigInteger modulus = prime1.multiply(prime2);
         BigInteger prime1MinusOne = prime1.subtract(BigInteger.ONE);
         BigInteger prime2MinusOne = prime2.subtract(BigInteger.ONE);
