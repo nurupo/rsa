@@ -40,8 +40,11 @@ public class RSA {
             System.exit(0);
         }
 
-        if (verifyArgs(argList, Arrays.asList("-d", "-c", "-s", "-p"))) {
-            // TODO: call decryption subroutine
+        if (verifyArgs(argList, Arrays.asList("-d", "-c", "-s", "-m"))) {
+            PrivateKey privateKey = (PrivateKey)deserialize(getFlagArg(argList, "-s"));
+            BigInteger ciphertext = readBigIntegerFromFile(getFlagArg(argList, "-c"), privateKey.getModulus().bitLength());
+            BigInteger plaintext = decrypt(privateKey, ciphertext);
+            writeBigIntegerToFile(getFlagArg(argList, "-m"), plaintext);
             System.exit(0);
         }
 
@@ -192,5 +195,16 @@ public class RSA {
         }
 
         return plaintext.modPow(publicKey.getPublicExponent(), publicKey.getModulus());
+    }
+
+    public static BigInteger decrypt(PrivateKey privateKey, BigInteger ciphertext) {
+
+        BigInteger m1 = ciphertext.modPow(privateKey.getExponent1(), privateKey.getPrime1());
+        BigInteger m2 = ciphertext.modPow(privateKey.getExponent2(), privateKey.getPrime2());
+        BigInteger h = m1.subtract(m2).multiply(privateKey.getCoefficient()).mod(privateKey.getPrime1());
+
+        BigInteger paddedPlaintext = m2.add(privateKey.getPrime2().multiply(h));
+
+        return unpad(privateKey, paddedPlaintext);
     }
 }
