@@ -17,4 +17,11 @@ public class PublicKey implements Serializable {
     public BigInteger getPublicExponent() {
         return publicExponent;
     }
+
+    @Override
+    public String toString() {
+        return "Public Key:" +
+                "\nn=" + modulus.toString(16) +
+                "\ne=" + publicExponent.toString(16);
+    }
 }

@@ -54,4 +54,17 @@ public class PrivateKey implements Serializable {
     public BigInteger getCoefficient() {
         return coefficient;
     }
+
+    @Override
+    public String toString() {
+        return "Private Key:" +
+                "\nn=" + modulus.toString(16) +
+                "\ne=" + publicExponent.toString(16) +
+                "\nd=" + privateExponent.toString(16) +
+                "\np=" + prime1.toString(16) +
+                "\nq=" + prime2.toString(16) +
+                "\nd mod (p-1)=" + exponent1.toString(16) +
+                "\nd mod (q-1)=" + exponent2.toString(16) +
+                "\nq^-1 mod p=" + coefficient.toString(16);
+    }
 }

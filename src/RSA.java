@@ -27,6 +27,8 @@ public class RSA {
         if (verifyArgs(argList, Arrays.asList("-K", "-p", "-s", "-b", "-y"))) {
             KeyPair k = new KeyPair(Integer.parseInt(getFlagArg(argList, "-b")),
                                     Double.parseDouble(getFlagArg(argList, "-y")));
+            System.out.println(k.getPublicKey());
+            System.out.println(k.getPrivateKey());
             serialize(k.getPublicKey(), getFlagArg(argList, "-p"));
             serialize(k.getPrivateKey(), getFlagArg(argList, "-s"));
             System.exit(0);
