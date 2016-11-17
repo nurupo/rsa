@@ -5,7 +5,7 @@ import java.util.*;
 
 public class RSA {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        List<String> argList= Arrays.asList(args);
+        List<String> argList = Arrays.asList(args);
 
         String usage = "Usage:\n" +
                        "  To generate a keypair of <bits> bits with a certanity <certanity> of keys\n" +
@@ -34,17 +34,17 @@ public class RSA {
 
         if (verifyArgs(argList, Arrays.asList("-e", "-m", "-p", "-c"))) {
             PublicKey publicKey = (PublicKey)deserialize(getFlagArg(argList, "-p"));
-            BigInteger plaintext = readBigIntegerFromFile(getFlagArg(argList, "-m"), publicKey.getModulus().bitLength());
-            BigInteger ciphertext = encrypt(publicKey, plaintext);
-            writeBigIntegerToFile(getFlagArg(argList, "-c"), ciphertext);
+            byte[] plaintext = readByteFile(getFlagArg(argList, "-m"), bitsToBytes(publicKey.getModulus().bitLength()));
+            byte[] ciphertext = encrypt(publicKey, plaintext);
+            writeByteFile(getFlagArg(argList, "-c"), ciphertext);
             System.exit(0);
         }
 
         if (verifyArgs(argList, Arrays.asList("-d", "-c", "-s", "-m"))) {
             PrivateKey privateKey = (PrivateKey)deserialize(getFlagArg(argList, "-s"));
-            BigInteger ciphertext = readBigIntegerFromFile(getFlagArg(argList, "-c"), privateKey.getModulus().bitLength());
-            BigInteger plaintext = decrypt(privateKey, ciphertext);
-            writeBigIntegerToFile(getFlagArg(argList, "-m"), plaintext);
+            byte[] ciphertext = readByteFile(getFlagArg(argList, "-c"), bitsToBytes(privateKey.getModulus().bitLength()));
+            byte[] plaintext = decrypt(privateKey, ciphertext);
+            writeByteFile(getFlagArg(argList, "-m"), plaintext);
             System.exit(0);
         }
 
@@ -103,39 +103,39 @@ public class RSA {
         return (int)Math.ceil(bits/8.0);
     }
 
-    public static BigInteger readBigIntegerFromFile(String filePath, int maxBits) throws IOException {
+    public static byte[] readByteFile(String filePath, int maxBytes) throws IOException {
         File file = new File(filePath);
 
-        int maxBytes = bitsToBytes(maxBits);
-
-        if (filePath.length() > maxBytes) {
+        if (file.length() > maxBytes) {
             throw new IllegalArgumentException("Error: file " + filePath + " is larger than " + maxBytes + " + bytes.");
         }
 
         byte[] bytes = new byte[(int)file.length()];
 
+        int offset = 0;
+
         try (FileInputStream fileStream = new FileInputStream(file);) {
-            fileStream.read(bytes);
+            while (true) {
+                int ret = fileStream.read(bytes, offset, bytes.length - offset);
+                if (ret <= 0) {
+                    break;
+                }
+                offset += ret;
+            }
         }
 
-        BigInteger result = new BigInteger(bytes);
-
-        if (result.bitLength() > maxBits) {
-            throw new IllegalArgumentException("Error: file " + filePath + " contains an integer larger than " + maxBits + " + bits.");
-        }
-
-        return result;
+        return bytes;
     }
 
-    public static void writeBigIntegerToFile(String filePath, BigInteger data) throws IOException {
+    public static void writeByteFile(String filePath, byte[] data) throws IOException {
         try (FileOutputStream fileStream = new FileOutputStream(filePath);) {
-            fileStream.write(data.toByteArray());
+            fileStream.write(data);
         }
     }
 
-    public static BigInteger pad(PublicKey publicKey, BigInteger plaintext) {
+    public static byte[] pad(PublicKey publicKey, byte[] plaintext) {
         int k = bitsToBytes(publicKey.getModulus().bitLength());
-        int mLen = bitsToBytes(plaintext.bitLength());
+        int mLen = plaintext.length;
 
         if (mLen > k - 11) {
             throw new IllegalArgumentException("Error: Plaintext file is too long.");
@@ -158,20 +158,18 @@ public class RSA {
 
         result[2 + psLen] = 0x00;
 
-        System.arraycopy(plaintext.toByteArray(), 0, result, 2 + psLen + 1, mLen);
+        System.arraycopy(plaintext, 0, result, 2 + psLen + 1, mLen);
 
-        return new BigInteger(result);
+        return result;
     }
 
-    public static BigInteger unpad(PrivateKey privateKey, BigInteger paddedPlaintext) {
-        byte[] paddedPlaintextByte = paddedPlaintext.toByteArray();
-
-        if (paddedPlaintextByte[0] != 0x02) {
+    public static byte[] unpad(PrivateKey privateKey, byte[] paddedPlaintext) {
+        if (paddedPlaintext[0] != 0x02) {
             throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
         }
 
         int i = 1;
-        while (paddedPlaintextByte[i] != 0x00) {
+        while (paddedPlaintext[i] != 0x00) {
             i ++;
         }
 
@@ -179,32 +177,33 @@ public class RSA {
             throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
         }
 
-        byte[] result = new byte[paddedPlaintextByte.length - (i+1)];
+        byte[] result = new byte[paddedPlaintext.length - (i+1)];
 
-        System.arraycopy(paddedPlaintextByte, i+1, result, 0, result.length);
+        System.arraycopy(paddedPlaintext, i+1, result, 0, result.length);
 
-        return new BigInteger(result);
+        return result;
     }
 
-    public static BigInteger encrypt(PublicKey publicKey, BigInteger plaintext) {
-        BigInteger paddedPlaintext = pad(publicKey, plaintext);
+    public static byte[] encrypt(PublicKey publicKey, byte[] plaintext) {
+        BigInteger paddedPlaintext = new BigInteger(pad(publicKey, plaintext));
 
         // https://tools.ietf.org/html/rfc3447#section-5.1.1
         if (paddedPlaintext.compareTo(publicKey.getModulus()) >= 0) {
             throw new IllegalArgumentException("Error: plaintext integer representation is greater than modulus - 1");
         }
 
-        return plaintext.modPow(publicKey.getPublicExponent(), publicKey.getModulus());
+        return paddedPlaintext.modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();
     }
 
-    public static BigInteger decrypt(PrivateKey privateKey, BigInteger ciphertext) {
+    public static byte[] decrypt(PrivateKey privateKey, byte[] ciphertext) {
+        BigInteger ciphertextInt = new BigInteger(ciphertext);
 
-        BigInteger m1 = ciphertext.modPow(privateKey.getExponent1(), privateKey.getPrime1());
-        BigInteger m2 = ciphertext.modPow(privateKey.getExponent2(), privateKey.getPrime2());
+        BigInteger m1 = ciphertextInt.modPow(privateKey.getExponent1(), privateKey.getPrime1());
+        BigInteger m2 = ciphertextInt.modPow(privateKey.getExponent2(), privateKey.getPrime2());
         BigInteger h = m1.subtract(m2).multiply(privateKey.getCoefficient()).mod(privateKey.getPrime1());
 
         BigInteger paddedPlaintext = m2.add(privateKey.getPrime2().multiply(h));
 
-        return unpad(privateKey, paddedPlaintext);
+        return unpad(privateKey, paddedPlaintext.toByteArray());
     }
 }
