@@ -155,10 +155,10 @@ public class RSA {
             throw new IllegalArgumentException("Error: Plaintext file is too long.");
         }
 
-        byte[] result = new byte[k];
+        byte[] paddedPlaintext = new byte[k];
 
-        result[0] = 0x00;
-        result[1] = 0x02;
+        paddedPlaintext[0] = 0x00;
+        paddedPlaintext[1] = 0x02;
 
         Random rng = new SecureRandom();
         int psLen = k - mLen - 3;
@@ -167,35 +167,39 @@ public class RSA {
             do {
                 rng.nextBytes(b);
             } while (b[0] == 0);
-            result[2 + i] = b[0];
+            paddedPlaintext[2 + i] = b[0];
         }
 
-        result[2 + psLen] = 0x00;
+        paddedPlaintext[2 + psLen] = 0x00;
 
-        System.arraycopy(plaintext, 0, result, 2 + psLen + 1, mLen);
+        System.arraycopy(plaintext, 0, paddedPlaintext, 2 + psLen + 1, mLen);
 
-        return result;
+        return paddedPlaintext;
     }
 
     public static byte[] unpad(PrivateKey privateKey, byte[] paddedPlaintext) {
-        if (paddedPlaintext[0] != 0x02) {
-            throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
+        int k = bitsToBytes(privateKey.getModulus().bitLength());
+
+        // +1 to compensate for the missing leading 0x00
+        if (paddedPlaintext.length + 1 != k) {
+            throw new IllegalArgumentException("Error: padded plaintext is not of the same length as the key.");
         }
 
         int i = 1;
-        while (paddedPlaintext[i] != 0x00) {
+        while (i < paddedPlaintext.length && paddedPlaintext[i] != 0x00) {
             i ++;
         }
+        i++;
 
-        if (i < 9) {
+        if (paddedPlaintext[0] != 0x02 || i < 10) {
             throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
         }
 
-        byte[] result = new byte[paddedPlaintext.length - (i+1)];
+        byte[] plaintext = new byte[paddedPlaintext.length - i];
 
-        System.arraycopy(paddedPlaintext, i+1, result, 0, result.length);
+        System.arraycopy(paddedPlaintext, i, plaintext, 0, plaintext.length);
 
-        return result;
+        return plaintext;
     }
 
     public static byte[] encrypt(PublicKey publicKey, byte[] plaintext) {
