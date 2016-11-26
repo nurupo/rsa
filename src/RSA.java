@@ -59,7 +59,7 @@ public class RSA {
             System.exit(0);
         }
 
-        System.err.print("Error: incorrect arguments passed.\n\n");
+        System.err.print("Error: Incorrect arguments passed.\n\n");
         System.out.print(usage);
         System.exit(1);
     }
@@ -113,7 +113,7 @@ public class RSA {
         File file = new File(filePath);
 
         if (file.length() > maxBytes) {
-            throw new IllegalArgumentException("Error: file " + filePath + " is larger than " + maxBytes + " + bytes.");
+            throw new IllegalArgumentException("Error: File " + filePath + " is larger than " + maxBytes + " + bytes.");
         }
 
         byte[] bytes = new byte[(int)file.length()];
@@ -182,7 +182,7 @@ public class RSA {
 
         // +1 to compensate for the missing leading 0x00
         if (paddedPlaintext.length + 1 != k) {
-            throw new IllegalArgumentException("Error: padded plaintext is not of the same length as the key.");
+            throw new IllegalArgumentException("Error: Padded plaintext is not of the same length as the key.");
         }
 
         int i = 1;
@@ -192,7 +192,7 @@ public class RSA {
         i++;
 
         if (paddedPlaintext[0] != 0x02 || i < 10) {
-            throw new IllegalArgumentException("Error: incorrect pad sequence, the ciphertext was likely tempered with.");
+            throw new IllegalArgumentException("Error: Incorrect pad sequence, the ciphertext was likely tempered with.");
         }
 
         byte[] plaintext = new byte[paddedPlaintext.length - i];
@@ -209,7 +209,7 @@ public class RSA {
 
         // https://tools.ietf.org/html/rfc3447#section-5.1.1
         if (paddedPlaintext.compareTo(publicKey.getModulus()) >= 0) {
-            throw new IllegalArgumentException("Error: plaintext integer representation is greater than modulus - 1");
+            throw new IllegalArgumentException("Error: Plaintext integer representation is greater than modulus - 1.");
         }
 
         return paddedPlaintext.modPow(publicKey.getPublicExponent(), publicKey.getModulus()).toByteArray();

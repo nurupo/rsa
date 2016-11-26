@@ -29,7 +29,7 @@ public class KeyPair {
 
         BigInteger privateExponent = publicExponent.modInverse(totientModulus);
         if (privateExponent.compareTo(BigInteger.ZERO) < 0 || privateExponent.compareTo(modulus) > 0) {
-            throw new ArithmeticException("Calculated public exponent is out of the range of [0. n].");
+            throw new ArithmeticException("Error: Calculated public exponent is out of the range of [0. n].");
         }
 
         BigInteger exponent1 = privateExponent.mod(prime1MinusOne);
