@@ -192,7 +192,7 @@ public class RSA {
         i++;
 
         if (paddedPlaintext[0] != 0x02 || i < 10) {
-            throw new IllegalArgumentException("Error: Incorrect pad sequence, the ciphertext was likely tempered with.");
+            throw new IllegalArgumentException("Error: Incorrect pad sequence, the ciphertext was likely tampered with.");
         }
 
         byte[] plaintext = new byte[paddedPlaintext.length - i];

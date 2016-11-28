@@ -41,7 +41,7 @@ public class KeyPair {
     }
 
     private static BigInteger randomProbablyPrime(int bits, double certainty) {
-        // 1 - 2^(-x) = certainty => x = -1 * ln(1 - certainty) / ln(2)
+        // 1 - 2^(-x) = certainty, therefore x = -1 * ln(1 - certainty) / ln(2)
         // since x has to be integer, we take the smallest integer x satisfying: 1 - 2^(-x) => certainty
         // by taking the ceiling.
         int tests = (int) Math.ceil(-Math.log(1 - certainty) / Math.log(2));
@@ -53,7 +53,6 @@ public class KeyPair {
         BigInteger n;
         Random rng = new SecureRandom();
         int bits = max.bitLength();
-        //System.out.println("Generating a random " + bits + "bit integer between " + min + " and " + max);
         do {
             n = new BigInteger(bits, rng);
             // we drop random numbers out of range of (min, max) because clamping or mod'ing would skew the distribution
