@@ -1,5 +1,23 @@
+# RSA
+
 An implementation of a single-block RSA encryption/decryption.
 
-Project for Cryptography class.
+This project is written for educational purposes only, it's not intended for the actual use and it might have security issues.
 
-This project is written for educational purposes only, it's not intended for the actual use and it's likely to have a lot of security issues.
+## Instructions
+
+To compile:
+```sh
+mkdir build
+javac -d build src/*.java
+```
+
+To see all available options:
+```sh
+cd build
+java RSA -h
+```
+
+# License
+
+MIT
